@@ -1,0 +1,40 @@
+# Runtime parameters — loaded by the platform registry and passed as
+# Graph(config=...). Separate from config/agent.yaml, which is the static
+# registration manifest and carries identity only.
+#
+# Every key below is read by src/graph/graph.py, validated (correct type, within
+# bounds) and seeded into state for the node that consumes it. A key that is
+# absent, malformed or out of range is not forwarded: the node then falls back to
+# its own module default, so a bad configuration file can neither crash graph
+# construction nor silently remove a bound.
+
+max_retry: 3
+timeout_s: 30
+
+governance:
+  # Hard cap on the caller payload, applied before it is parsed.
+  # Bounds: 1024 – 1048576 bytes.
+  max_input_bytes: 32768
+
+  # Per-field cap on free text rendered into the document (intended use,
+  # limitations, training-data summary and the model identity fields). Text over
+  # the cap is truncated with a visible marker rather than dropped silently.
+  # Bounds: 80 – 20000 characters.
+  max_field_chars: 2000
+
+  # Cap on how many caller-supplied performance metrics are rendered.
+  # Bounds: 1 – 200.
+  max_performance_metrics: 25
+
+  # Cap on how many governance frameworks one request may name. Framework ids are
+  # rendered into a label line, so this bounds a caller-controlled run of text.
+  # Bounds: 1 – 50.
+  max_target_frameworks: 10
+
+security:
+  # Declared invariant, NOT a runtime switch. The output gate in
+  # src/nodes/post_process_node.py runs unconditionally and reads nothing from
+  # this file — a security control that configuration can turn off is not a
+  # control. The key is declared so the manifest states the invariant, and
+  # tests/unit/test_runtime_config.py asserts it stays true.
+  s3_gate_enabled: true

@@ -1,0 +1,61 @@
+[project]
+name = "cmn-c1-068"
+version = "0.1.0"
+description = "AI model governance documentation and audit-trail generator — AgentCore Template"
+requires-python = ">=3.11"
+# The framework (agenticstar-agentcore) is NOT a public-PyPI dependency; it is
+# installed from the package registry alongside this package. PyYAML, used to
+# read config/config.yaml, is one of its own pinned requirements and is
+# therefore always present wherever the framework is.
+dependencies = [
+    "agenticstar-agentcore[marketplace,openai]==1.0.3",]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==9.0.3",
+    "pytest-cov==5.0.0",
+    "pytest-asyncio==1.4.0",
+    "httpx==0.28.1",
+    "ruff==0.4.4",
+    "mypy==1.10.0",
+    "types-PyYAML==6.0.12.20240311",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+exclude = ["tests*", "docs*", "scripts*", "deploy*"]
+
+[build-system]
+requires = ["setuptools==68.2.2"]
+build-backend = "setuptools.build_meta"
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+# Wheel-compatibility exception: the published agenticstar-agentcore wheel ships
+# no py.typed marker, so every framework.* / shared.* import resolves to Any and
+# each required framework subclass becomes a "subclass of Any" error. Every other
+# strict setting stays on.
+disallow_subclassing_any = false
+# src/examples/ holds read-only reference implementations for the next template
+# author. They are checked by the audit-trace gate but not type-annotated.
+exclude = ["src/examples/"]
+
+[[tool.mypy.overrides]]
+module = ["framework.*", "shared.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# The untyped wheel makes AgentState resolve to Any, so `class State(AgentState)`
+# fails valid-type on EVERY field. One cause, one suppression — the individual
+# field errors are not separately meaningful.
+module = ["src.schemas.state"]
+disable_error_code = ["valid-type"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "strict"
